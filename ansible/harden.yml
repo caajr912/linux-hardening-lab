@@ -1,0 +1,190 @@
+
+
+---
+- name: Harden Rocky Linux baseline (NIST 800-53 mapped)
+  hosts: targets
+  become: true
+
+  tasks:
+    # ---------- Prerequisites ----------
+    - name: "Prereq | Python libraries required by Ansible modules"
+      ansible.builtin.dnf:
+        name: [python3-libselinux, python3-firewall]
+        state: present
+      tags: [always]
+    # ---------- AC-8: System Use Notification ----------
+    - name: "AC-8 | Set login banner"
+      ansible.builtin.copy:
+        dest: "{{ item }}"
+        content: |
+          Authorized use only. Activity on this system is monitored and logged.
+          Unauthorized access is prohibited.
+        owner: root
+        group: root
+        mode: "0644"
+      loop: [/etc/issue, /etc/issue.net]
+      tags: [AC-8]
+
+    # ---------- AC-6 / IA-2: SSH hardening ----------
+    - name: "AC-6/IA-2 | SSH hardening drop-in (00- sorts first, first value wins)"
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-hardening.conf
+        content: |
+          # Managed by Ansible - linux-hardening-lab
+          PermitRootLogin no
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitEmptyPasswords no
+          MaxAuthTries 3
+          Banner /etc/issue.net
+        owner: root
+        group: root
+        mode: "0600"
+      notify: restart sshd
+      tags: [AC-6, IA-2]
+
+    # ---------- IA-5: Authenticator Management ----------
+    - name: "IA-5 | Password complexity policy"
+      ansible.builtin.lineinfile:
+        path: /etc/security/pwquality.conf
+        regexp: "^#?\\s*{{ item.key }}\\s*="
+        line: "{{ item.key }} = {{ item.value }}"
+      loop:
+        - { key: minlen, value: 14 }
+        - { key: minclass, value: 3 }
+        - { key: maxrepeat, value: 3 }
+      tags: [IA-5]
+
+    # ---------- AC-3: Access Enforcement ----------
+    - name: "AC-3 | SELinux enforcing"
+      ansible.posix.selinux:
+        policy: targeted
+        state: enforcing
+      tags: [AC-3]
+
+    # ---------- SC-7: Boundary Protection ----------
+    - name: "SC-7 | firewalld running and enabled"
+      ansible.builtin.systemd_service:
+        name: firewalld
+        state: started
+        enabled: true
+      tags: [SC-7]
+
+    - name: "SC-7 | Allow SSH only (ssh enabled before others removed)"
+      ansible.posix.firewalld:
+        service: "{{ item.svc }}"
+        state: "{{ item.state }}"
+        permanent: true
+        immediate: true
+      loop:
+        - { svc: ssh, state: enabled }
+        - { svc: cockpit, state: disabled }
+        - { svc: dhcpv6-client, state: disabled }
+      tags: [SC-7]
+
+    # ---------- AU-2 / AU-12: Event Logging ----------
+    - name: "AU-2/AU-12 | auditd installed"
+      ansible.builtin.dnf:
+        name: audit
+        state: present
+      tags: [AU-2, AU-12]
+
+    - name: "AU-2/AU-12 | auditd running and enabled"
+      ansible.builtin.systemd_service:
+        name: auditd
+        state: started
+        enabled: true
+      tags: [AU-2, AU-12]
+
+    - name: "AU-2/AU-12 | Audit rules for identity, privilege, and SSH config changes"
+      ansible.builtin.copy:
+        dest: /etc/audit/rules.d/50-hardening.rules
+        content: |
+          -w /etc/passwd -p wa -k identity
+          -w /etc/group -p wa -k identity
+          -w /etc/shadow -p wa -k identity
+          -w /etc/sudoers -p wa -k privilege
+          -w /etc/sudoers.d/ -p wa -k privilege
+          -w /etc/ssh/sshd_config -p wa -k sshd_config
+          -w /etc/ssh/sshd_config.d/ -p wa -k sshd_config
+          -w /usr/bin/sudo -p x -k privileged_exec
+        owner: root
+        group: root
+        mode: "0600"
+      notify: load audit rules
+      tags: [AU-2, AU-12]
+
+    # ---------- AU-8: Time Stamps ----------
+    - name: "AU-8 | chrony installed"
+      ansible.builtin.dnf:
+        name: chrony
+        state: present
+      tags: [AU-8]
+
+    - name: "AU-8 | chronyd running and enabled"
+      ansible.builtin.systemd_service:
+        name: chronyd
+        state: started
+        enabled: true
+      tags: [AU-8]
+
+    # ---------- CM-7: Least Functionality ----------
+    - name: "CM-7 | Remove insecure or unneeded packages"
+      ansible.builtin.dnf:
+        name: [telnet, telnet-server, tftp-server, rsh, rsh-server, ypbind, cockpit]
+        state: absent
+      tags: [CM-7]
+
+    - name: "CM-7 | Mask Ctrl-Alt-Del reboot (symlink to /dev/null; module misreports aliased units)"
+      ansible.builtin.file:
+        src: /dev/null
+        dest: /etc/systemd/system/ctrl-alt-del.target
+        state: link
+        force: true
+      notify: reload systemd
+      tags: [CM-7]
+
+    # ---------- SI-2: Flaw Remediation ----------
+    - name: "SI-2 | dnf-automatic installed"
+      ansible.builtin.dnf:
+        name: dnf-automatic
+        state: present
+      tags: [SI-2]
+
+    - name: "SI-2 | Apply security updates automatically"
+      ansible.builtin.lineinfile:
+        path: /etc/dnf/automatic.conf
+        regexp: "^{{ item.key }}\\s*="
+        line: "{{ item.key }} = {{ item.value }}"
+      loop:
+        - { key: upgrade_type, value: security }
+        - { key: apply_updates, value: "yes" }
+      tags: [SI-2]
+
+    - name: "SI-2 | dnf-automatic timer enabled"
+      ansible.builtin.systemd_service:
+        name: dnf-automatic.timer
+        state: started
+        enabled: true
+      tags: [SI-2]
+
+  handlers:
+    - name: Check sshd config before restarting
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+      listen: restart sshd
+
+    - name: Restart sshd
+      ansible.builtin.systemd_service:
+        name: sshd
+        state: restarted
+      listen: restart sshd
+
+    - name: Load audit rules
+      ansible.builtin.command: augenrules --load
+      listen: load audit rules
+
+    - name: Reload systemd
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      listen: reload systemd
