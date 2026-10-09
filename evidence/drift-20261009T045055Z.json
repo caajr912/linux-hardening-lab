@@ -1,0 +1,228 @@
+{
+  "host": "localhost.localdomain",
+  "timestamp": "2026-10-09T04:50:55.003237+00:00",
+  "baseline": "linux-hardening-lab (NIST 800-53 mapped)",
+  "summary": {
+    "total": 30,
+    "passed": 30,
+    "failed": 0
+  },
+  "results": [
+    {
+      "control": "AC-8",
+      "check": "banner_text",
+      "expected": "contains 'Authorized use only'",
+      "actual": "Authorized use only. Activity on this system is monitored and logged.",
+      "pass": true
+    },
+    {
+      "control": "AC-8",
+      "check": "ssh_banner_configured",
+      "expected": "/etc/issue.net",
+      "actual": "/etc/issue.net",
+      "pass": true
+    },
+    {
+      "control": "AC-6",
+      "check": "ssh_permit_root_login",
+      "expected": "no",
+      "actual": "no",
+      "pass": true
+    },
+    {
+      "control": "IA-2",
+      "check": "ssh_password_auth",
+      "expected": "no",
+      "actual": "no",
+      "pass": true
+    },
+    {
+      "control": "IA-2",
+      "check": "ssh_kbd_interactive_auth",
+      "expected": "no",
+      "actual": "no",
+      "pass": true
+    },
+    {
+      "control": "IA-2",
+      "check": "ssh_max_auth_tries",
+      "expected": "<= 3",
+      "actual": "3",
+      "pass": true
+    },
+    {
+      "control": "IA-5",
+      "check": "password_min_length",
+      "expected": ">= 14",
+      "actual": "14",
+      "pass": true
+    },
+    {
+      "control": "IA-5",
+      "check": "password_min_classes",
+      "expected": ">= 3",
+      "actual": "3",
+      "pass": true
+    },
+    {
+      "control": "AC-3",
+      "check": "selinux_enforcing",
+      "expected": "Enforcing",
+      "actual": "Enforcing",
+      "pass": true
+    },
+    {
+      "control": "SC-7",
+      "check": "firewalld_running",
+      "expected": "running",
+      "actual": "running",
+      "pass": true
+    },
+    {
+      "control": "SC-7",
+      "check": "firewall_services_allowlist",
+      "expected": [
+        "ssh"
+      ],
+      "actual": [
+        "ssh"
+      ],
+      "pass": true
+    },
+    {
+      "control": "SC-7",
+      "check": "firewall_ports_allowlist",
+      "expected": [
+        "9100/tcp"
+      ],
+      "actual": [],
+      "pass": true
+    },
+    {
+      "control": "AU-2",
+      "check": "auditd_active",
+      "expected": "active",
+      "actual": "active",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/etc/passwd",
+      "expected": "-w /etc/passwd -p wa -k identity",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/etc/group",
+      "expected": "-w /etc/group -p wa -k identity",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/etc/shadow",
+      "expected": "-w /etc/shadow -p wa -k identity",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/etc/sudoers",
+      "expected": "-w /etc/sudoers -p wa -k privilege",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/etc/ssh/sshd_config",
+      "expected": "-w /etc/ssh/sshd_config -p wa -k sshd_config",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-12",
+      "check": "audit_watch:/usr/bin/sudo",
+      "expected": "-w /usr/bin/sudo -p x -k privileged_exec",
+      "actual": "present",
+      "pass": true
+    },
+    {
+      "control": "AU-8",
+      "check": "time_synchronized",
+      "expected": "yes",
+      "actual": "yes",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:telnet",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:telnet-server",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:tftp-server",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:rsh",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:rsh-server",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:ypbind",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "package_absent:cockpit",
+      "expected": "not installed",
+      "actual": "not installed",
+      "pass": true
+    },
+    {
+      "control": "CM-7",
+      "check": "ctrl_alt_del_masked",
+      "expected": "masked",
+      "actual": "masked",
+      "pass": true
+    },
+    {
+      "control": "SI-2",
+      "check": "dnf_automatic_timer",
+      "expected": "enabled",
+      "actual": "enabled",
+      "pass": true
+    },
+    {
+      "control": "SI-2",
+      "check": "auto_apply_security_updates",
+      "expected": "upgrade_type=security, apply_updates=yes",
+      "actual": "upgrade_type=security, apply_updates=yes",
+      "pass": true
+    }
+  ]
+}

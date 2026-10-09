@@ -1,0 +1,58 @@
+---
+- name: Deploy compliance drift checker
+  hosts: targets
+  become: true
+
+  tasks:
+    - name: Evidence and metrics directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: /var/lib/drift-check/evidence, mode: "0750" }
+        - { path: /var/lib/node_exporter/textfile_collector, mode: "0755" }
+
+    - name: Install drift checker
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../drift/check.py"
+        dest: /usr/local/bin/drift-check
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/drift-check.service
+        content: |
+          [Unit]
+          Description=Compliance drift check (linux-hardening-lab)
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/drift-check
+        mode: "0644"
+
+    - name: systemd timer (every 5 minutes)
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/drift-check.timer
+        content: |
+          [Unit]
+          Description=Run compliance drift check every 5 minutes
+
+          [Timer]
+          OnBootSec=2min
+          OnUnitActiveSec=5min
+
+          [Install]
+          WantedBy=timers.target
+        mode: "0644"
+
+    - name: Enable and start timer
+      ansible.builtin.systemd_service:
+        name: drift-check.timer
+        state: started
+        enabled: true
+        daemon_reload: true
