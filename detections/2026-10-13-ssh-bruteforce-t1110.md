@@ -9,7 +9,7 @@ detects, correlates, and maps it.
 
 | Role | Host | Notes |
 |------|------|-------|
-| Attacker | Ubuntu server | Source of the SSH attempts |
+| Attacker | Ubuntu server (192.168.56.11) | Source of the SSH attempts |
 | Target | Rocky (Wazuh agent, `192.168.56.10`) | Generates sshd events, forwards via agent |
 | SIEM | Wazuh manager | Receives, correlates, renders dashboard |
 
@@ -27,9 +27,7 @@ for i in $(seq 1 12); do
 done
 ```
 
-The attempts were fired in a tight burst (all 12 inside roughly one
-30-second window) to cross Wazuh's brute-force correlation threshold, not
-just trigger individual failed-login rules.
+The attempts were fired in a tight burst to cross Wazuh’s brute-force correlation threshold, not just trigger individual failed-login rules.
 
 **Target config at test time** (`sshd -T`): `passwordauthentication no`,
 `pubkeyauthentication yes`, `permitrootlogin no`, `maxauthtries 3`.
@@ -84,8 +82,7 @@ and reviewed centrally.
 1. Full pipeline validated: attacker → target sshd → agent forward →
    manager correlation → dashboard render.
 2. Brute-force correlation rule fired, not just individual failure rules.
-3. Events correctly dual-mapped to Credential Access and Lateral Movement;
-   understand the overlap, don't overstate it.
+3. Rule 5710 events carried both Credential Access (T1110.001) and Lateral Movement (T1021.004) tags; the Lateral Movement tag reflects SSH as a remote-access service, not an actual pivot.
 4. **Unrelated:** the Vulnerability Detection panel (0 Critical / 1,140
    High) is Wazuh's package-CVE scanner, dominated by kernel CVEs on an
    un-updated VM. Not caused by this test. Separate remediation item:
@@ -93,9 +90,6 @@ and reviewed centrally.
 
 ## Evidence captured
 
-- [ ] Raw `/var/log/secure` lines on Rocky showing the failed attempts
-- [ ] Dashboard — Events count evolution spike
-- [ ] Expanded alert JSON showing `rule.id`, `rule.level`, `srcip`
-      (Ubuntu attacker), and the T1110 tag
-- [ ] MITRE Top Tactics panel
-- [ ] PCI DSS compliance panel
+* journald `sshd-session` output on Rocky showing all 12 attempts ([screenshot](../docs/ssh-bruteforce-journald.png))
+* Wazuh alert list showing rules 5710 and 5712 with MITRE mappings ([screenshot](../docs/ssh-bruteforce-alerts.png))
+
