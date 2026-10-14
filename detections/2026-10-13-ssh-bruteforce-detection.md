@@ -52,26 +52,32 @@ matching the 12 events Wazuh received.
 
 ## What detected
 
-Confirmed in the dashboard:
+12 attempts on the host produced 12 Wazuh alerts:
 
-- **Events count evolution** — sharp vertical climb to 12 in a single
-  burst. The shape itself is the brute-force signature; normal logins don't
-  produce 12 failures in half a minute.
-- **MITRE ATT&CK — Top Tactics:**
-  - Credential Access (12) — T1110 Brute Force. The intended result.
-  - Lateral Movement (11) — T1021 Remote Services. The same SSH events map
-    here too, because an SSH login attempt is both a credential-guessing
-    action and a remote-access action. **No actual pivot occurred** — this
-    is tactic overlap on the same events, not demonstrated lateral movement.
-- **PCI DSS compliance mappings** — the attempts satisfied logging controls
-  10.2.4 (failed-access-attempt logging), 10.2.5 (auth-mechanism logging),
-  and 10.6.1. Shows the host meets PCI logging requirements, a separate
-  framework from MITRE.
+| Rule | Level | Description | MITRE | Count |
+| --- | --- | --- | --- | --- |
+| 5710 | 5 | sshd: Attempt to login using a non-existent user | T1110.001, T1021.004 | 11 |
+| 5712 | 10 | sshd: brute force trying to get access to the system. Non existent user. | T1110 | 1 |
 
-Rule IDs observed: **[fill in from alerts — e.g. 5710 invalid user, 5716
-auth failure, 5712/5720/5763 brute-force correlation]**. The higher-level
-correlation rule firing is the key result — it's what a plain log grep
-would not produce.
+The key result is rule **5712**. It is a frequency-based correlation rule
+built on 5710: once enough invalid-user failures arrive from the same
+source within its time window, it raises a level-10 brute-force alert. It
+fired at 22:05:50, during the burst. A plain log grep would show 12 failures;
+the correlation rule is what turns them into one high-severity alert to triage.
+
+**MITRE tactic counts explained.** The dashboard showed Credential Access (12)
+and Lateral Movement (11). Rule 5710 maps to both T1110.001 (Password
+Guessing) and T1021.004 (SSH), while 5712 maps to T1110 only. The event that
+crossed the threshold was raised as 5712 instead of 5710, so Credential
+Access counts all 12 alerts and Lateral Movement counts 11. **No lateral
+movement occurred.** The T1021.004 tag reflects that SSH is a remote-access
+service, not that a pivot happened.
+
+**PCI DSS mappings.** The alerts also mapped to logging requirements
+10.2.4, 10.2.5, and 10.6.1, showing failed access attempts were captured
+and reviewed centrally.
+
+![Wazuh alerts](../docs/ssh-bruteforce-alerts.png)
 
 ## Findings
 
