@@ -1,13 +1,14 @@
 # Incident log
 
 ## 1. nmcli rejected the static IP command
-- **cause:** typed a multi-line command on one line, but kept the '\' cotinutation character.
-- **fix:** retyped correctly
+* **Symptom:** `nmcli` returned a syntax error when setting the static IP.
+* **Cause:** Typed a multi-line command on one line but kept the `\` continuation character.
+* **Fix:** Retyped the command correctly on one line.
 
 ## 2. Second network adapter missing on Rocky
-- **Symptop:** 'nmcli device' showed only network 'enp0s3'; actingting the host only profile failed.
-- **cause:** changed adapter one to host only rather than enabling adapter 2. also removed NAT/ internet
-- **fix:** full power down, reconfigured net adapters
+* **Symptom:** `nmcli device` showed only `enp0s3`; activating the host-only profile failed.
+* **Cause:** Changed adapter 1 to host-only instead of enabling adapter 2, which also removed NAT and internet access.
+* **Fix:** Powered the VM off fully and reconfigured the adapters: adapter 1 NAT, adapter 2 host-only.
 
 ## 3. SSH refused on Ubuntu control node
 - **Symptom:** `Connection refused` on port 22.
