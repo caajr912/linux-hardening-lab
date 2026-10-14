@@ -5,7 +5,7 @@ detection pipeline (host → Wazuh agent → manager → dashboard) catches them
 correlates them, and maps them to MITRE ATT&CK. Each entry links to a full
 report with the commands run, what fired, and captured evidence.
 
-This is distinct from [`../INCIDENT_LOG.md`](../INCIDENT_LOG.md), which
+This is distinct from [`../docs/incident-log.md`](../docs/incident-log.md), which
 records things that broke and how they were fixed. Here, everything is run
 on purpose.
 
@@ -13,7 +13,7 @@ on purpose.
 
 | Date | Technique | MITRE | Target | Result | Report |
 |------|-----------|-------|--------|--------|--------|
-| 2026-10-13 | SSH brute force | T1110 | Rocky | Detected — brute-force correlation rule fired, dual-mapped to Credential Access + Lateral Movement | [report](2026-10-13-ssh-bruteforce-t1110.md) |
+| 2026-10-13 | SSH brute force | T1110 | Rocky | Detected: rule 5712 (level 10) brute-force correlation fired on 5710 invalid-user events | [report](2026-10-13-ssh-bruteforce-t1110.md) |
 
 ## Planned
 
