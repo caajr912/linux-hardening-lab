@@ -35,6 +35,8 @@ All VMs run in VirtualBox on a Windows host, on an isolated lab network.
 
 ![Wazuh dashboard with Rocky Linux agent active](docs/wazuh-agent.png)
 
+**6. Detection tests (`detections/`).** Adversary techniques run deliberately against the lab to validate the pipeline end to end and confirm alerts map to MITRE ATT&CK. First test: SSH brute force (T1110), where Wazuh's level-10 brute-force correlation rule (5712) fired. [Report](detections/2026-10-13-ssh-bruteforce-t1110.md)
+
 ## Incident log
 
 Real problems hit while building the lab, each written up with symptoms, investigation, and root cause in the [incident log](docs/incident-log.md). Highlights:
