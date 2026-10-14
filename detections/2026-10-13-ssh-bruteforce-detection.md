@@ -31,13 +31,24 @@ The attempts were fired in a tight burst (all 12 inside roughly one
 30-second window) to cross Wazuh's brute-force correlation threshold, not
 just trigger individual failed-login rules.
 
-> Fill in before committing:
-> - Auth case: password auth was **[on / off]** on Rocky at test time
->   (`sshd -T | grep -i passwordauth`). This determines whether the events
->   landed as password-failure or invalid-user/preauth events.
-> - Throttling: all 12 attempts **[did / did not]** land cleanly. If some
->   were dropped, `MaxAuthTries` / `MaxStartups` / firewalld was throttling
->   — a sign of the hardening working, not a failure.
+**Target config at test time** (`sshd -T`): `passwordauthentication no`,
+`pubkeyauthentication yes`, `permitrootlogin no`, `maxauthtries 3`.
+
+Because password auth was disabled, no password was ever sent. All 12
+attempts were rejected pre-authentication as invalid-user events, and
+`MaxAuthTries` never came into play. The burst ran from 22:05:48 to
+22:05:50, about two seconds.
+
+**Host-side confirmation.** The events were written to the systemd journal
+under `sshd-session`, not to `/var/log/secure`:
+
+    sudo journalctl -u sshd --since "2026-10-13 21:50" --until "2026-10-13 22:30" | grep -i fakeuser
+
+This returned 12 `Invalid user fakeuser from 192.168.56.11` /
+`Connection closed by invalid user ... [preauth]` pairs, one per attempt,
+matching the 12 events Wazuh received.
+
+![journald output](../docs/ssh-bruteforce-journald.png)
 
 ## What detected
 
